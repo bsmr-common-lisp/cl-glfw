@@ -430,12 +430,14 @@ If the window is closed, the loop is also exited."
 
 (defmacro define-callback-setter (c-name callback-prefix return-type (&body args) &key before-form after-form documentation)
   (let* ((callback-name (intern (format nil "~A-CALLBACK" callback-prefix)))
+	 (cffi-callback-name #+(or win32 windows) (list callback-name :convention :stdcall)
+                             #-(or win32 windows) callback-name)
          (special-name (intern (format nil "*~S*" callback-name)))
          (setter-name (intern (format nil "SET-~S" callback-name)))
          (internal-setter-name (intern (format nil "%~S" setter-name))))
     `(progn
        (defparameter ,special-name nil)
-       (cffi:defcallback ,callback-name ,return-type ,args
+       (cffi:defcallback ,cffi-callback-name ,return-type ,args
          (when ,special-name
            (prog2
                ,before-form
